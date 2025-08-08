@@ -56,7 +56,3 @@ async fn main() {
 - [ ] Add integration tests
 - [ ] Publish to crates.io
 - [ ] Support for custom
-
-```
-
-```
