@@ -45,6 +45,7 @@ set BRAVE_API_KEY=your_api_key_here
 **PowerShell:**
 ```powershell
 $env:BRAVE_API_KEY=
+```
 
 Example code:
 
