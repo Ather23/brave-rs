@@ -23,9 +23,28 @@ tokio = { version = "1", features = ["full"] }
 
 Set your Brave API key as an environment variable:
 
+**Command Prompt:**
+
 ```sh
 set BRAVE_API_KEY=your_api_key_here
 ```
+
+**PowerShell:**
+
+```powershell
+$env:BRAVE_API_KEY="your_api_key_here"
+```
+
+````Set your Brave API key as an environment variable:
+
+**Command Prompt:**
+```sh
+set BRAVE_API_KEY=your_api_key_here
+```
+
+**PowerShell:**
+```powershell
+$env:BRAVE_API_KEY=
 
 Example code:
 
@@ -48,3 +67,4 @@ async fn main() {
 - [ ] Add integration tests
 - [ ] Publish to crates.io
 - [ ] Support for custom
+````
