@@ -1,22 +1,14 @@
 use reqwest::RequestBuilder;
-use thiserror;
-use crate::WebSearchApiResponse;
+
+use crate::{
+    brave::{ query_builders::web_search_query_builder, BraveClientError },
+    types::{ query_params::WebSearchQueryParamsBuilder, WebSearchQueryParams },
+    WebSearchApiResponse,
+};
 pub struct BraveClient {
     api_key: String,
     base_url: String,
     client: reqwest::Client,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum BraveClientError {
-    #[error("Client error: {0}")] ClientError(String),
-    #[error("Http error: {0}")] HttpError(String),
-}
-
-impl From<reqwest::Error> for BraveClientError {
-    fn from(err: reqwest::Error) -> Self {
-        BraveClientError::ClientError(err.to_string())
-    }
 }
 
 impl BraveClient {
@@ -28,24 +20,27 @@ impl BraveClient {
         }
     }
 
-    pub async fn web_search(&self, query: &str) -> Result<WebSearchApiResponse, BraveClientError> {
-        let url = format!("/web/search?q={}", query);
-        let response = self.get_request_builder(&url).send().await?;
-        let response = match response.error_for_status() {
-            Ok(resp) => resp,
-            Err(err) => {
-                let status = err.status();
-                let body = err
-                    .url()
-                    .map(|_| "Failed to get body due to HTTP error".to_string())
-                    .unwrap_or_default();
-                return Err(
-                    BraveClientError::HttpError(format!("HTTP error {:?}: {}", status, body))
-                );
-            }
-        };
+    pub async fn web_search(
+        &self,
+        query_params: &WebSearchQueryParams
+    ) -> Result<WebSearchApiResponse, BraveClientError> {
+        let query = web_search_query_builder(query_params).unwrap();
+        let response = self.get_request_builder(&query).send().await?.error_for_status()?;
 
-        Ok(response.json::<WebSearchApiResponse>().await?)
+        let result = response.json::<WebSearchApiResponse>().await?;
+        Ok(result)
+    }
+
+    pub async fn web_search_by_query(
+        &self,
+        query: &str
+    ) -> Result<WebSearchApiResponse, BraveClientError> {
+        let params = WebSearchQueryParamsBuilder::default().q(query).build().unwrap();
+        let query: String = params.into();
+        let response = self.get_request_builder(&query).send().await?.error_for_status()?;
+
+        let result = response.json::<WebSearchApiResponse>().await?;
+        Ok(result)
     }
 
     fn get_request_builder(&self, url_path: &str) -> RequestBuilder {
@@ -56,5 +51,72 @@ impl BraveClient {
             .header("X-Subscription-Token", &self.api_key)
             .header("Accept", "application/json");
         return response;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use httpmock::MockServer;
+    use httpmock::Method::GET;
+    use serde_json::json;
+
+    #[tokio::test]
+    async fn test_web_search_by_query() {
+        let server = MockServer::start();
+
+        let mock = server.mock(|when, then| {
+            when.method(GET).path("/web/search").query_param("q", "rust");
+            then.status(200)
+                .header("Content-Type", "application/json")
+                .json_body(
+                    json!({
+                    "type": "web",
+                    "query": { "original": "rust", "show_strict_warning": false, "is_navigational": false, "is_news_breaking": false, "spellcheck_off": false, "country": "us", "bad_results": false, "should_fallback": false, "postal_code": "", "city": "", "header_country": "", "more_results_available": false, "state": "" },
+                    "web": { "type": "web", "results": [] }
+                })
+                );
+        });
+
+        let mut client = BraveClient::new("test_key");
+        client.base_url = server.base_url();
+
+        let result = client.web_search_by_query("rust").await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.result_type, "web");
+        mock.assert();
+    }
+
+    #[tokio::test]
+    async fn test_web_search_returns_brave_client_error_on_http_error() {
+        let server = MockServer::start();
+
+        // Mock a 401 Unauthorized error from the API
+        let mock = server.mock(|when, then| {
+            when.method(GET).path("/web/search").query_param("q", "unauthorized");
+            then.status(401)
+                .header("Content-Type", "application/json")
+                .json_body(json!({
+                "error": "Unauthorized"
+            }));
+        });
+
+        let mut client = BraveClient::new("bad_key");
+        client.base_url = server.base_url();
+
+        let params = WebSearchQueryParamsBuilder::default().q("unauthorized").build().unwrap();
+
+        let result = client.web_search(&params).await;
+
+        assert!(result.is_err());
+        // Assert that the error is a BraveClientError::HttpError
+        if let Err(BraveClientError::HttpError(msg)) = result {
+            assert!(msg.contains("401"));
+        } else {
+            panic!("Expected BraveClientError::HttpError");
+        }
+        mock.assert();
     }
 }

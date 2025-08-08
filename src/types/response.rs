@@ -8,15 +8,13 @@ pub struct WebSearchApiResponse {
     pub faq: Option<FaqResults>,
     pub infobox: Option<Infobox>,
     pub locations: Option<LocationResults>,
-
-    // TODO: BUGGY
-    // pub mixed: Option<MixedResults>,
     pub news: Option<NewsResults>,
     pub query: Query,
-
-    // TODO: BUGGY
-    // pub videos: Option<VideoResults>,
     pub web: Option<SearchResults>,
+
+    // TODO: implement these
+    // pub mixed: Option<MixedResults>,
+    // pub videos: Option<VideoResults>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
