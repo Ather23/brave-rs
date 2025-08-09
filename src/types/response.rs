@@ -169,8 +169,6 @@ pub struct NewsResults {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NewsResult {
-    #[serde(rename = "type")]
-    pub result_type: String,
     pub url: String,
     pub title: String,
     pub description: String,
@@ -201,7 +199,7 @@ pub struct Query {
 pub struct VideoResults {
     #[serde(rename = "type")]
     pub result_type: String,
-    pub results: Vec<VideoResult>,
+    pub results: Vec<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
