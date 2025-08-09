@@ -14,13 +14,6 @@ Easily perform web searches and handle results in your Rust applications.
 
 ## Usage
 
-Add to your `Cargo.toml`:
-
-```toml
-brave-rs = { path = "." }
-tokio = { version = "1", features = ["full"] }
-```
-
 Set your Brave API key as an environment variable:
 
 **Command Prompt:**
@@ -55,4 +48,3 @@ async fn main() {
 - [ ] Improve documentation and examples
 - [ ] Add integration tests
 - [ ] Publish to crates.io
-- [ ] Support for custom
