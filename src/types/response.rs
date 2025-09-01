@@ -11,10 +11,10 @@ pub struct WebSearchApiResponse {
     pub news: Option<NewsResults>,
     pub query: Query,
     pub web: Option<SearchResults>,
+    pub videos: Option<VideoResults>,
 
     // TODO: implement these
     // pub mixed: Option<MixedResults>,
-    // pub videos: Option<VideoResults>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -199,7 +199,8 @@ pub struct Query {
 pub struct VideoResults {
     #[serde(rename = "type")]
     pub result_type: String,
-    pub results: Vec<serde_json::Value>,
+    pub results: Option<Vec<VideoResult>>,
+    pub mutated_by_goggles: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -209,16 +210,31 @@ pub struct VideoResult {
     pub url: String,
     pub title: String,
     pub description: String,
-    pub age: String,
+    pub fetched_content_timestamp: Option<u64>,
+    pub age: Option<String>,
     pub page_age: Option<String>,
-    pub video: Option<VideoInfo>,
+    pub video: Option<VideoData>,
+    pub meta_url: Option<MetaUrl>,
+    pub thumbnail: Option<Thumbnail>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct VideoInfo {
-    pub duration: String,
-    pub views: u64,
-    pub creator: String,
-    pub publisher: String,
+pub struct MetaUrl {
+    pub scheme: String,
+    pub netloc: String,
+    pub hostname: String,
+    pub favicon: String,
+    pub path: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VideoData {
+    pub duration: Option<String>,
+    pub views: Option<String>,
+    pub creator: Option<String>,
+    pub publisher: Option<String>,
     pub thumbnail: Option<Thumbnail>,
+    pub tags: Option<Vec<String>>,
+    pub author: Option<Profile>,
+    pub requires_subscription: Option<bool>,
 }
