@@ -12,9 +12,7 @@ pub struct WebSearchApiResponse {
     pub query: Query,
     pub web: Option<SearchResults>,
     pub videos: Option<VideoResults>,
-
-    // TODO: implement these
-    // pub mixed: Option<MixedResults>,
+    pub mixed: Option<MixedResponse>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -142,14 +140,19 @@ pub struct Rating {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct MixedResults {
+pub struct MixedResponse {
     #[serde(rename = "type")]
     pub result_type: String,
+    pub main: Option<Vec<ResultReferenceResult>>,
+    pub top: Option<Vec<ResultReferenceResult>>,
+    pub side: Option<Vec<ResultReferenceResult>>,
+}
 
-    //TODO: implement top and side
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ResultReferenceResult {
+    #[serde(rename = "type")]
+    pub result_type: String,
     pub main: Option<Vec<MixedMain>>,
-    // pub top: Option<Vec<MixedBlock>>,
-    // pub side: Option<Vec<MixedBlock>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
