@@ -119,4 +119,81 @@ mod tests {
         }
         mock.assert();
     }
+
+    #[tokio::test]
+    async fn test_web_search_video_result() {
+        let server = MockServer::start();
+
+        let mock = server.mock(|when, then| {
+            when.method(GET).path("/web/search").query_param("q", "rust video");
+            then.status(200)
+                .header("Content-Type", "application/json")
+                .json_body(
+                    serde_json::json!({
+                        "type": "videos",
+                        "query": {
+                            "original": "rust video",
+                            "show_strict_warning": false,
+                            "is_navigational": false,
+                            "is_news_breaking": false,
+                            "spellcheck_off": false,
+                            "country": "us",
+                            "bad_results": false,
+                            "should_fallback": false,
+                            "postal_code": "",
+                            "city": "",
+                            "header_country": "",
+                            "more_results_available": false,
+                            "state": ""
+                        },
+                        "videos": {
+                            "type": "videos",
+                            "results": [
+                                {
+                                    "type": "video_result",
+                                    "url": "https://www.youtube.com/watch?v=5C_HPTJg5ek&pp=0gcJCfwAo7VqN5tD",
+                                    "title": "Rust in 100 Seconds",
+                                    "description": "Enjoy the videos and music you love, upload original content, and share it all with friends, family, and the world on YouTube.",
+                                    "fetched_content_timestamp": 1755933539,
+                                    "video": {},
+                                    "meta_url": {
+                                        "scheme": "https",
+                                        "netloc": "youtube.com",
+                                        "hostname": "www.youtube.com",
+                                        "favicon": "https://imgs.search.brave.com/Wg4wjE5SHAargkzePU3eSLmWgVz84BEZk1SjSglJK_U/rs:fit:32:32:1:0/g:ce/aHR0cDovL2Zhdmlj/b25zLnNlYXJjaC5i/cmF2ZS5jb20vaWNv/bnMvOTkyZTZiMWU3/YzU3Nzc5YjExYzUy/N2VhZTIxOWNlYjM5/ZGVjN2MyZDY4Nzdh/ZDYzMTYxNmI5N2Rk/Y2Q3N2FkNy93d3cu/eW91dHViZS5jb20v",
+                                        "path": "› watch"
+                                    },
+                                    "thumbnail": {
+                                        "src": "https://imgs.search.brave.com/TECNOdC1xY5QK9FrXS28Ut5jocySHkFKcGthOxWpulo/rs:fit:200:200:1:0/g:ce/aHR0cHM6Ly9pLnl0/aW1nLmNvbS92aS81/Q19IUFRKZzVlay9o/cWRlZmF1bHQuanBn",
+                                        "original": "https://i.ytimg.com/vi/5C_HPTJg5ek/hqdefault.jpg"
+                                    }
+                                }
+                            ],
+                            "mutated_by_goggles": false
+                        }
+                    })
+                );
+        });
+
+        let mut client = BraveClient::new("test_key");
+        client.base_url = server.base_url();
+
+        let result = client.web_search_by_query("rust video").await;
+
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert_eq!(response.result_type, "videos");
+        let videos = response.videos.unwrap();
+        let video_result = videos.results.unwrap();
+
+        assert_eq!(videos.result_type, "videos");
+        assert_eq!(video_result.len(), 1);
+        let video_result = &video_result[0];
+        assert_eq!(video_result.title, "Rust in 100 Seconds");
+        assert_eq!(
+            video_result.url,
+            "https://www.youtube.com/watch?v=5C_HPTJg5ek&pp=0gcJCfwAo7VqN5tD"
+        );
+        mock.assert();
+    }
 }
