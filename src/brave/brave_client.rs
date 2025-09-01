@@ -196,4 +196,66 @@ mod tests {
         );
         mock.assert();
     }
+    #[tokio::test]
+    async fn test_web_search_with_mixed_field() {
+        let server = MockServer::start();
+        let mock = server.mock(|when, then| {
+            when.method(GET).path("/web/search").query_param("q", "mixed");
+            then.status(200)
+                .header("Content-Type", "application/json")
+                .json_body(
+                    serde_json::json!({
+                        "type": "web",
+                        "query": {
+                            "original": "mixed",
+                            "show_strict_warning": false,
+                            "is_navigational": false,
+                            "is_news_breaking": false,
+                            "spellcheck_off": false,
+                            "country": "us",
+                            "bad_results": false,
+                            "should_fallback": false,
+                            "postal_code": "",
+                            "city": "",
+                            "header_country": "",
+                            "more_results_available": false,
+                            "state": ""
+                        },
+                        "mixed": {
+                            "type": "mixed",
+                            "main": [
+                                {
+                                    "type": "reference",
+                                    "main": [
+                                        {"type": "main", "index": 1, "all": true}
+                                    ]
+                                }
+                            ],
+                            "top": null,
+                            "side": null
+                        }
+                    })
+                );
+        });
+        let mut client = BraveClient::new("test_key");
+        client.base_url = server.base_url();
+        let result = client.web_search_by_query("mixed").await;
+        assert!(result.is_ok());
+        let response = result.unwrap();
+        assert!(response.mixed.is_some());
+        let mixed = response.mixed.as_ref().unwrap();
+        assert_eq!(mixed.result_type, "mixed");
+        assert!(mixed.main.is_some());
+        let main = mixed.main.as_ref().unwrap();
+        assert_eq!(main.len(), 1);
+        let ref_result = &main[0];
+        assert_eq!(ref_result.result_type, "reference");
+        assert!(ref_result.main.is_some());
+        let mixed_main = ref_result.main.as_ref().unwrap();
+        assert_eq!(mixed_main.len(), 1);
+        assert_eq!(mixed_main[0].result_type, "main");
+        assert_eq!(mixed_main[0].index, 1);
+        assert!(mixed_main[0].all);
+        mock.assert();
+    }
 }
