@@ -233,7 +233,7 @@ pub struct MetaUrl {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VideoData {
     pub duration: Option<String>,
-    pub views: Option<String>,
+    pub views: Option<usize>,
     pub creator: Option<String>,
     pub publisher: Option<String>,
     pub thumbnail: Option<Thumbnail>,

@@ -2,6 +2,7 @@
 pub enum BraveClientError {
     #[error("Client error: {0}")] ClientError(String),
     #[error("Http error: {0}")] HttpError(String),
+    #[error("Unable to deserialize response")] ResponseDeserializationError(String),
 }
 
 impl From<reqwest::Error> for BraveClientError {
