@@ -35,12 +35,25 @@ impl BraveClient {
         &self,
         query: &str
     ) -> Result<WebSearchApiResponse, BraveClientError> {
+        let count: u32 = 20;
         let params = WebSearchQueryParamsBuilder::default().q(query).build().unwrap();
-        let query: String = params.into();
-        let response = self.get_request_builder(&query).send().await?.error_for_status()?;
 
-        let result = response.json::<WebSearchApiResponse>().await?;
-        Ok(result)
+        println!("Web search query params {:?}", &params);
+
+        let query: String = params.into();
+        let response = self.get_request_builder(&query).send().await?;
+
+        let json = response.text().await.unwrap();
+
+        println!("Response {:?} \n", &json);
+
+        let result = serde_json::from_str::<WebSearchApiResponse>(&json);
+        match result {
+            Ok(resp) => {
+                return Ok(resp);
+            }
+            Err(err) => Err(BraveClientError::ResponseDeserializationError(err.to_string())),
+        }
     }
 
     fn get_request_builder(&self, url_path: &str) -> RequestBuilder {
